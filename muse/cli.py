@@ -120,7 +120,7 @@ def get_fig_info_cl(var):
     """ Simple extract of figure information from command-line """
     fig = {}
     if len(var) < 2:  # Only 1 variable
-        fig['x'] = 'sys.exec.out.time'
+        fig['x'] = str("sys.exec.out.time")
         fig['y'] = var
     else:
         fig['x'] = var[0]
@@ -133,13 +133,13 @@ def get_fig_info_cl(var):
 
 def get_logged_vars(args):
     """ Composes a list of all variables logged in the run(s) """
-    lvars = set(['sys.exec.out.time'])  # List of all unique variables logged
+    lvars = set([str("sys.exec.out.time")])  # List of all unique variables logged
     logs = {}  # Dictionary of log files and the variable logged within
 
     # Major assumption is that all comparable runs log all the same variables
     run = args.runs[0]
 
-    # Identity log files
+    # Identify log files
     find_all = False
     root = os.path.join(args.sim, run)
     files = []
@@ -168,7 +168,7 @@ def get_logged_vars(args):
         if not log_var_list:
             if args.verbose:
                 print("\nWarning: log file is empty or unsupported: " + lfile)
-        log_var_list.append('sys.exec.out.time')  # Everyone has time
+        log_var_list.append(str("sys.exec.out.time"))  # Everyone has time
         logs[lfile] = log_var_list
         lvars = lvars.union(logs[lfile])
 
@@ -191,7 +191,7 @@ def get_plot_vars(args, figs, lvars):
         if 'x' in fg:
             varset = varset.union(var_parse(fg['x'], lvars))
         else:  # Defaults to time
-            fg['x'] = 'sys.exec.out.time'
+            fg['x'] = str("sys.exec.out.time")
             if not found_time:
                 found_time = True
                 varset = varset.union(var_parse(fg['x'], lvars))
@@ -218,7 +218,7 @@ def get_plot_vars(args, figs, lvars):
 def var_parse(exp, lvars):
     """ Parses variable expressions and checks that variables are logged """
     # Checks for non-string expressions
-    if type(exp) != type(str('')):  # No need to parse numeric values
+    if type(exp) != type(str("")):  # No need to parse numeric values
         return list([])  # return null list
     # Get rid of all whitespace in expression
     exp = exp.replace(" ", "")
@@ -473,9 +473,10 @@ def parse_user_args():
         has_ac = False
 
     parser = ap.ArgumentParser(description="muse: plotting made beautifully easy",
+                               fromfile_prefix_chars='@',
                                formatter_class=ap.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-r', '--runs', help="List of RUN/MONTE directory(ies) of data",
-                        nargs='+', type=str, default=['RUN_airdrop'])
+                        nargs='+', type=str, default=[])
     parser.add_argument('-y', '--yml', help="List of YAML plot format files",
                         nargs='+', type=str, default=[])
     parser.add_argument('-v', '--var', help="List of variables to plot from command line. First variable is x if more than one variable is listed, otherwise variables are y.",
@@ -487,13 +488,21 @@ def parse_user_args():
     parser.add_argument('--style', help="Sets the style for the plots",
                         default='classic')
     parser.add_argument('-s', '--sim', type=str, help="Location of RUN/MONTE directory(ies) of interest",
-                        default=os.path.join(os.getenv('SISU'), 'sims/SIM_alpha'))
+                        default=None)
     parser.add_argument('-p', '--ploc', type=str,  help="Location of yaml plot file(s) of interest",
-                        default=os.path.join(os.getenv('SISU'), 'sims/SIM_alpha/muse_plots'))
+                        default=None)
     parser.add_argument('--verbose', help="Verbose command-line output for diagnostics",
                         default=False, action='store_true')
+
+    # Autocompletion functionality
     if has_ac:
         argcomplete.autocomplete(parser)
+
+    # Add the default options from a file
+    default_options_file = ".muse_defaults"
+    if os.path.isfile(default_options_file):
+        sys.argv.insert(1, "@" + default_options_file)
+
     return parser.parse_args()
 
 if __name__ == '__main__':

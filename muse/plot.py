@@ -9,7 +9,7 @@ def generate_plots(args, figs):
     try:
         mp.style.use(args.style)
     except AttributeError:
-        print("Warning: Style feature requires matplotlib 1.5")
+        print("Info: Style feature requires matplotlib 1.5")
 
     i = 0
     for f in figs:
